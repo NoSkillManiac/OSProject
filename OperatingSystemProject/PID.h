@@ -37,11 +37,10 @@ public:
 	int in_buf_len;
 	int out_buf_len;
 	int temp_buf_len;
-	unsigned long cputime;
-	unsigned long waittime;
+	double cputime;
+	double waittime;
 private:
-	LARGE_INTEGER lastMeasurement;
-	LARGE_INTEGER lastMeasurementFrequency;
+	unsigned long lastMeasurement;
 	unsigned int* simMemory;
 };
 

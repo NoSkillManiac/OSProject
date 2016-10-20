@@ -4,7 +4,6 @@
 PID::PID()
 {
 	registers = new int[14];
-	QueryPerformanceFrequency(&lastMeasurementFrequency);
 }
 
 
@@ -21,20 +20,18 @@ ProcessState PID::getState()
 
 void PID::setState(ProcessState s)
 {
-	LARGE_INTEGER currentTime;
-	QueryPerformanceCounter(&currentTime);
-	unsigned long ellapsedTime = (unsigned long)((currentTime.QuadPart - lastMeasurement.QuadPart) / lastMeasurementFrequency.QuadPart);
+	SYSTEMTIME time;
+	GetSystemTime(&time);
+	unsigned long current = time.wSecond * 1000 + time.wMilliseconds;
+	unsigned long ellapsed = current - lastMeasurement;
 
 	if (state == RUNNING && s != RUNNING)
-		cputime += ellapsedTime;
+		cputime += ellapsed;
 	else if (state == WAITING && s != WAITING)
-		waittime += ellapsedTime;
+		waittime += ellapsed;
+	lastMeasurement = current;
 
 	state = ProcessState(s);
-
-	//get frequency for next measurement
-	QueryPerformanceFrequency(&lastMeasurementFrequency);
-	lastMeasurement = currentTime;
 }
 
 int PID::getID(PID pid)

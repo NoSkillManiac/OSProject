@@ -66,7 +66,7 @@ Kernel::Kernel(Memory* virtualram, Disk* virtualdisk, std::vector<unsigned int>*
 		PID* pInfo = this->pcb->GetProcess(i);
 
 		//timing data
-		output << "Process: " << pInfo->id << std::endl;
+		output << "Process: " << std::dec << pInfo->id << std::endl;
 		output << "CPU Time: " << pInfo->cputime << "\t\tWait Time: " << pInfo->waittime << std::endl;
 		output << "Process Memory Space After Execution: " << std::endl;
 		output << "X\t\t0\t\t1\t\t2\t\t3\t\t4\t\t5\t\t6\t\t7\t\t8\t\t9\t\tA\t\tB\t\tC\t\tD\t\tE\t\tF" << std::endl;
@@ -76,8 +76,10 @@ Kernel::Kernel(Memory* virtualram, Disk* virtualdisk, std::vector<unsigned int>*
 		for (unsigned int i = 0; i < pInfo->end_addr; i++)
 		{
 			if (i % 16 == 0)
-				output << std::endl << std::hex << (i / 16);
-			output << "\t\t" << std::hex << memoryspace[i];
+				output << std::endl << std::hex << (i / 16) << "\t";
+			output << "\t" << std::hex << memoryspace[i];
+			if (memoryspace[i] < 268435456)
+				output << "\t";
 		}
 		output << std::endl << std::endl;
 	}
@@ -153,6 +155,14 @@ void Kernel::TerminateProcess(PID* pInfo)
 	//remove process from lts and sts
 	this->sts->removeFrom(pInfo);
 	this->lts->removeFrom(pInfo);
+
+	//fetch ram
+	unsigned int* mem = new unsigned int[pInfo->end_addr - pInfo->base_addr + 1];
+	for (unsigned int i = pInfo->base_addr; i <= pInfo->end_addr; i++)
+	{
+		mem[i - pInfo->base_addr] = ram->get(i);
+	}
+	pInfo->recordMemory(mem);
 
 	//free memory up
 	this->lts->UnMapProcess(pInfo);

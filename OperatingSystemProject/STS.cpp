@@ -187,14 +187,6 @@ void STS::Event_CPUHalted(Processor* src, PID* prgrm, HaltReason reason)
 		//the LTS will be handling freed-memory by itself
 		prgrm->setState(TERMINATED);
 		std::cout << "Process: " << prgrm->id << " completed successfully." << std::endl;
-
-		unsigned int* mem = new unsigned int[prgrm->end_addr - prgrm->base_addr];
-		Memory* ram = this->kernel->GetMemory();
-		for (unsigned int i = prgrm->base_addr; i <= prgrm->end_addr; i++)
-		{
-			mem[i - prgrm->base_addr] = ram->get(i, false);
-		}
-		prgrm->recordMemory(mem);
 	}
 	
 	//clear processor context
