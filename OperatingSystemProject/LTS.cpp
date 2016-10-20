@@ -23,36 +23,7 @@ void LTS::addToQueue(PID* pid) //adds to end of queue
 	//if number of programs in RAM < degree of multiprocessing => Load program into memory and add to the STS (and increment numLoaded)
 	if (numLoaded < DM)
 	{
-		//get the file data
-		std::vector<unsigned int>* filedata = (this->kernel->GetDisk()->load(pid->program_file));
-		int size = filedata->size();
-		int* file = new int[size];
-		for (int i = 0; i < size; i++)
-		{
-			file[i] = filedata->front();
-			filedata->erase(filedata->begin());
-		}
-		delete filedata;
-
-		//first load instructions into memory
-		int end_instructions = 3 + pid->num_instructions; //end_instructions is the index of the first data section descriptor
-		pid->base_addr = this->kernel->getLastUsedAddr();
-		pid->end_addr = pid->base_addr + size;
-		this->kernel->setLastUsedAddr(pid->end_addr + 1);
-		int current_addr = pid->base_addr; //the address we are currently referencing in memory to write to
-		for (int i = 3; i < end_instructions; i++) //skip first three values as they are just program details
-		{
-			this->kernel->GetMemory()->set(current_addr, file[i]);
-			current_addr++;
-		}
-
-		//now load data into memory
-		int end_data = size;
-		for (int i = end_instructions + 3; i < end_data; i++)
-		{
-			this->kernel->GetMemory()->set(current_addr, file[i]);
-			current_addr++;
-		}
+		this->MapProcess(pid); //load process into memory (also sets base_addr and end_addr)
 
 		//place program into sts
 		this->kernel->GetSTS()->addToScheduler(pid);
@@ -153,5 +124,80 @@ void LTS::Event_CPUHalted(Processor* src, PID* prgrm, HaltReason reason)
 		//terminate finished process and reclaim memory
 		this->kernel->TerminateProcess(prgrm);
 		numLoaded--;
+
+		if (numLoaded == 0)
+		{
+			//reset the kernel's end location to 0
+			//this is strictly for the very simple memory management of phase 1
+			this->kernel->setLastUsedAddr(0);
+
+			//load 10 more
+			while (numLoaded < 10 && pList != NULL)
+			{
+				Node<PID*>* current = pList; //get top item (highest priority) from list
+				PID* pInfo = current->getData(); //get the associated data
+				pList = current->getNext(); //remove that item from the list
+				current->setNext(NULL);
+				delete current;
+
+				//map process to memory
+				this->MapProcess(pInfo);
+
+				//add process to sts
+				this->kernel->GetSTS()->addToScheduler(pInfo);
+
+				numLoaded++;
+			}
+
+			if (numLoaded == 0 && pList == NULL)
+			{
+				//TODO: Handle the virtual machine executing all processes successfully
+			}
+		}
 	}
+}
+
+void LTS::MapProcess(PID* pInfo)
+{
+	//get the file data
+	std::vector<unsigned int>* filedata = (this->kernel->GetDisk()->load(pInfo->program_file));
+	int size = filedata->size();
+	int* file = new int[size];
+	for (int i = 0; i < size; i++)
+	{
+		file[i] = filedata->front();
+		filedata->erase(filedata->begin());
+	}
+	delete filedata;
+
+	//first load instructions into memory
+	int end_instructions = 3 + pInfo->num_instructions; //end_instructions is the index of the first data section descriptor
+	pInfo->base_addr = this->kernel->getLastUsedAddr();
+	pInfo->end_addr = pInfo->base_addr + size;
+	this->kernel->setLastUsedAddr(pInfo->end_addr + 1);
+	int current_addr = pInfo->base_addr; //the address we are currently referencing in memory to write to
+	for (int i = 3; i < end_instructions; i++) //skip first three values as they are just program details
+	{
+		this->kernel->GetMemory()->set(current_addr, file[i]);
+		current_addr++;
+	}
+
+	//now load data into memory
+	int end_data = size;
+	for (int i = end_instructions + 3; i < end_data; i++)
+	{
+		this->kernel->GetMemory()->set(current_addr, file[i]);
+		current_addr++;
+	}
+}
+
+void LTS::UnMapProcess(PID* pInfo)
+{
+	Memory* ram = this->kernel->GetMemory();
+	for (unsigned int i = pInfo->base_addr; i <= pInfo->end_addr; i++)
+	{
+		ram->set(i, 0);
+	}
+	pInfo->base_addr = 0;
+	pInfo->end_addr = 0;
 }

@@ -2,7 +2,7 @@
 
 PCB::PCB()
 {
-	processes = new std::vector<PID*>();
+	processes = new std::vector<PID*>(40);
 }
 
 

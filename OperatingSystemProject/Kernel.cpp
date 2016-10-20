@@ -12,6 +12,9 @@ Kernel::Kernel(Memory* virtualram, Disk* virtualdisk, std::vector<unsigned int>*
 	//initialize the pcb
 	this->pcb = new PCB();
 
+	//init the halt event store
+	this->halt_events = new std::vector<CpuHaltEvent*>();
+
 	//initialize the processor(s)
 	this->processors = new Processor*[NUM_PROCESSORS];
 	for (int i = 0; i < NUM_PROCESSORS; i++)
@@ -39,7 +42,21 @@ Kernel::Kernel(Memory* virtualram, Disk* virtualdisk, std::vector<unsigned int>*
 		std::cout << "Added process to lts" << std::endl;
 	}
 
-	while (true) {}
+	while (true)
+	{
+		while (halt_events->size() > 0)
+		{
+			CpuHaltEvent* evt = halt_events->at(0);
+			halt_events->erase(halt_events->begin());
+			Processor* src = evt->getSrc();
+			HaltReason reason = evt->getHaltReason();
+			PID* prgrm = evt->getProcess();
+
+			this->lts->Event_CPUHalted(src, prgrm, reason);
+			this->sts->Event_CPUHalted(src, prgrm, reason);
+			delete evt;
+		}
+	}
 }
 
 
@@ -106,18 +123,14 @@ PID* Kernel::CreateProcess(unsigned int file)
 
 void Kernel::TerminateProcess(PID* pInfo)
 {
-	this->lts->removeFrom(pInfo);
-	pInfo->state = (ProcessState)TERMINATED;
+	pInfo->setState(TERMINATED);
 
 	//remove process from lts and sts
 	this->sts->removeFrom(pInfo);
 	this->lts->removeFrom(pInfo);
 
 	//free memory up
-	for (unsigned int index = pInfo->base_addr; index <= pInfo->end_addr; index++)
-	{
-		this->ram->set(index, 0x0);
-	}
+	this->lts->UnMapProcess(pInfo);
 }
 
 STS* Kernel::GetSTS()
@@ -137,6 +150,8 @@ Memory* Kernel::GetMemory()
 
 void Kernel::Event_CPUHalted(Processor* src, PID* prgrm, HaltReason reason)
 {
-	this->lts->Event_CPUHalted(src, prgrm, reason);
-	this->sts->Event_CPUHalted(src, prgrm, reason);
+	//pcb_mutex.lock();
+	CpuHaltEvent* evt = new CpuHaltEvent(src, prgrm, reason);
+	halt_events->push_back(evt);
+	//pcb_mutex.unlock();
 }

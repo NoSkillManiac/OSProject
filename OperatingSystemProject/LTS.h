@@ -22,6 +22,8 @@ public:
 	void assignProcessor(unsigned int i); //If 1 processor, always uses 0
 	void checkBalance(); //checks the balance of the CPU load if multiple processors
 	void Event_CPUHalted(Processor* src, PID* prgrm, HaltReason reason); //called by the kernel when a cpu halts
+	void MapProcess(PID* pInfo); //maps a process into memory
+	void UnMapProcess(PID* pInfo); //unmaps/removes a process from memory and reclaims the memory
 
 private:
 	PID *conBlock;

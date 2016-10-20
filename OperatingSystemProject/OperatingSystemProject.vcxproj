@@ -65,6 +65,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="CpuHaltEvent.h" />
     <ClInclude Include="Disk.h" />
     <ClInclude Include="Kernel.h" />
     <ClInclude Include="LTS.h" />
@@ -76,6 +77,7 @@
     <ClInclude Include="STS.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CpuHaltEvent.cpp" />
     <ClCompile Include="Disk.cpp" />
     <ClCompile Include="Kernel.cpp" />
     <ClCompile Include="LTS.cpp" />

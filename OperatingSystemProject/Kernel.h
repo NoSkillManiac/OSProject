@@ -8,12 +8,15 @@
 #include "LTS.h"
 #include "STS.h"
 #include <vector>
+#include <mutex>
+#include "CpuHaltEvent.h"
 
-#define NUM_PROCESSORS 1
+#define NUM_PROCESSORS 4
 
 //foward declarators since the schedulers need the kernel
 class LTS;
 class STS;
+class CpuHaltEvent;
 
 #pragma once
 class Kernel
@@ -44,7 +47,9 @@ private:
 	std::vector<unsigned int>* files;
 	LTS* lts;
 	STS* sts;
+	std::mutex pcb_mutex;
 	unsigned int lastUsedAddr = 0;
+	std::vector<CpuHaltEvent*>* halt_events;
 };
 
 #endif

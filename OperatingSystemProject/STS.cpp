@@ -94,32 +94,29 @@ void STS::addToQueue(PID* pi) //adds to end of queue
 void STS::removeFrom(PID* pid) //removes process from queue for any reason
 {
 	//check if list is empty
-	Node<PID*>* prev = pList;
-	if (prev == NULL)
+	Node<PID*>* current = pList;
+	if (current == NULL)
 		return;
-	Node<PID*> *current = pList->getNext();
-
-	//if list has one element and that element is pid, then remove that one element and return
-	if (current == NULL && prev->getData()->id == pid->id)
+	else if (current->getData()->id == pid->id)
 	{
-		delete prev;
-		pList = NULL;
+		pList = current->getNext();
+		current->setNext(NULL);
+		delete current;
 		return;
 	}
-
-	//if the element could be further down the list
+	
 	while (current != NULL)
 	{
-		if (current->getData()->id == pid->id)
+		Node<PID*>* next = current->getNext();
+		if (next == NULL)
+			return;
+		else if (next->getData()->id == pid->id)
 		{
-			Node<PID*>* next = current->getNext();
-			current->setNext(NULL);
-			prev->setNext(next);
-			delete current;
+			current->setNext(next->getNext());
+			next->setNext(NULL);
+			delete next;
 			return;
 		}
-
-		prev = current;
 		current = current->getNext();
 	}
 }
@@ -189,6 +186,7 @@ void STS::Event_CPUHalted(Processor* src, PID* prgrm, HaltReason reason)
 		//cpu got to the end of the program so set it as terminated
 		//the LTS will be handling freed-memory by itself
 		prgrm->setState(TERMINATED);
+		std::cout << "Process: " << prgrm->id << " completed successfully." << std::endl;
 	}
 	
 	//clear processor context
