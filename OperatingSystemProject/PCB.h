@@ -16,6 +16,7 @@ public:
 
 private:
 	std::vector<PID*>* processes;
+	
 };
 
 #endif

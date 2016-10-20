@@ -151,7 +151,7 @@ void LTS::Event_CPUHalted(Processor* src, PID* prgrm, HaltReason reason)
 
 			if (numLoaded == 0 && pList == NULL)
 			{
-				//TODO: Handle the virtual machine executing all processes successfully
+				this->kernel->OnShutdown();
 			}
 		}
 	}
@@ -198,6 +198,6 @@ void LTS::UnMapProcess(PID* pInfo)
 	{
 		ram->set(i, 0);
 	}
+	pInfo->end_addr -= pInfo->base_addr;
 	pInfo->base_addr = 0;
-	pInfo->end_addr = 0;
 }

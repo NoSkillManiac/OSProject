@@ -1,6 +1,8 @@
 #ifndef INCLUDE_PID
 #define INCLUDE_PID
 
+#include <Windows.h>
+
 #pragma once
 enum ProcessState
 {
@@ -20,6 +22,8 @@ public:
 	ProcessState getState();
 	void setState(ProcessState s);
 	int getID(PID pid);
+	void recordMemory(unsigned int* memory);
+	unsigned int* getMemory();
 
 	int id;
 	ProcessState state;
@@ -35,6 +39,10 @@ public:
 	int temp_buf_len;
 	unsigned long cputime;
 	unsigned long waittime;
+private:
+	LARGE_INTEGER lastMeasurement;
+	LARGE_INTEGER lastMeasurementFrequency;
+	unsigned int* simMemory;
 };
 
 #endif

@@ -1,6 +1,7 @@
 #include "Kernel.h"
 #include <vector>
 #include <iostream>
+#include <fstream>
 
 Kernel::Kernel(Memory* virtualram, Disk* virtualdisk, std::vector<unsigned int>* directory)
 {
@@ -42,7 +43,7 @@ Kernel::Kernel(Memory* virtualram, Disk* virtualdisk, std::vector<unsigned int>*
 		std::cout << "Added process to lts" << std::endl;
 	}
 
-	while (true)
+	while (running)
 	{
 		while (halt_events->size() > 0)
 		{
@@ -57,6 +58,30 @@ Kernel::Kernel(Memory* virtualram, Disk* virtualdisk, std::vector<unsigned int>*
 			delete evt;
 		}
 	}
+
+	//print timing data
+	std::ofstream output("Program-Output.txt", std::ofstream::out);
+	for (int i = 1; i < 31; i++)
+	{
+		PID* pInfo = this->pcb->GetProcess(i);
+
+		//timing data
+		output << "Process: " << pInfo->id << std::endl;
+		output << "CPU Time: " << pInfo->cputime << "\t\tWait Time: " << pInfo->waittime << std::endl;
+		output << "Process Memory Space After Execution: " << std::endl;
+		output << "X\t\t0\t\t1\t\t2\t\t3\t\t4\t\t5\t\t6\t\t7\t\t8\t\t9\t\tA\t\tB\t\tC\t\tD\t\tE\t\tF" << std::endl;
+
+		//row = offset % 16
+		unsigned int* memoryspace = pInfo->getMemory();
+		for (unsigned int i = 0; i < pInfo->end_addr; i++)
+		{
+			if (i % 16 == 0)
+				output << std::endl << std::hex << (i / 16);
+			output << "\t\t" << std::hex << memoryspace[i];
+		}
+		output << std::endl << std::endl;
+	}
+	output.close();
 }
 
 
@@ -154,4 +179,9 @@ void Kernel::Event_CPUHalted(Processor* src, PID* prgrm, HaltReason reason)
 	CpuHaltEvent* evt = new CpuHaltEvent(src, prgrm, reason);
 	halt_events->push_back(evt);
 	//pcb_mutex.unlock();
+}
+
+void Kernel::OnShutdown()
+{
+	running = false;
 }

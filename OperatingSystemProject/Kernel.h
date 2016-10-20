@@ -30,6 +30,7 @@ public:
 	STS* GetSTS();
 	Disk* GetDisk();
 	Memory* GetMemory();
+	void OnShutdown();
 	unsigned int getLastUsedAddr() const
 	{
 		return lastUsedAddr;
@@ -50,6 +51,7 @@ private:
 	std::mutex pcb_mutex;
 	unsigned int lastUsedAddr = 0;
 	std::vector<CpuHaltEvent*>* halt_events;
+	bool running = true;
 };
 
 #endif

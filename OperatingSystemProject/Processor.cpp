@@ -90,6 +90,9 @@ void Processor::decode_and_execute(unsigned int instruction)
 		unsigned char s2 = (unsigned char)((instruction & 0x000F0000) >> 16);
 		unsigned char dr = (unsigned char)((instruction & 0x0000F000) >> 12);
 
+		if (type == INSTRUCTION_ARITHMETIC)
+			this->pc = this->pc;
+
 		switch (opcode)
 		{
 		case OP_MOV:
@@ -126,6 +129,9 @@ void Processor::decode_and_execute(unsigned int instruction)
 		unsigned char br = (unsigned char)((instruction & 0x00F00000) >> 20);
 		unsigned char dr = (unsigned char)((instruction & 0x000F0000) >> 16);
 		unsigned short addr = (unsigned short)(instruction & 0x0000FFFF);
+
+		if (type == INSTRUCTION_CONDITIONAL)
+			this->pc = this->pc;
 
 		switch (opcode)
 		{
@@ -172,6 +178,9 @@ void Processor::decode_and_execute(unsigned int instruction)
 		unsigned char r1 = (unsigned char)((instruction & 0x00F00000) >> 20);
 		unsigned char r2 = (unsigned char)((instruction & 0x000F0000) >> 16);
 		unsigned short addr_data = (unsigned short)(instruction & 0x0000FFFF);
+
+		if (type == INSTRUCTION_IO)
+			this->pc = this->pc;
 
 		switch (opcode)
 		{
@@ -242,7 +251,7 @@ void Processor::RD(unsigned short addr, unsigned char reg, unsigned char sreg)
 	else
 		faddr = (unsigned int)this->registers[sreg] + (unsigned int)(this->context->base_addr*4);
 	this->registers[reg] = this->physical_ram->get(faddr, true);
-}; //not sure how to implement yet
+};
 
 void Processor::WR(unsigned short addr, unsigned char reg, unsigned char sreg)
 {
@@ -252,7 +261,7 @@ void Processor::WR(unsigned short addr, unsigned char reg, unsigned char sreg)
 	else
 		faddr = (unsigned int)this->registers[sreg] + (unsigned int)(this->context->base_addr * 4);
 	this->physical_ram->set(faddr, (unsigned int)this->registers[reg], true);
-}; //not sure how to implement yet
+};
 
 void Processor::ST(unsigned char reg1, unsigned short addr)
 {
@@ -323,7 +332,8 @@ void Processor::DIVI(int data, unsigned char dreg)
 void Processor::LDI(short data, unsigned char dreg)
 {
 	//I am assuming this sets the value of dreg to the value held at the memory location
-	this->registers[dreg] = this->physical_ram->get((unsigned short)data + (this->context->base_addr*4), true);
+	//this->registers[dreg] = this->physical_ram->get((unsigned short)data + (this->context->base_addr*4), true);
+	this->registers[dreg] = data;
 };
 
 void Processor::SLT(unsigned char sreg, unsigned char breg, unsigned char dreg)

@@ -41,8 +41,8 @@ PID* PCB::GetProcess(int index)
 {
 	for (int i = 0; i < processes->size(); i++)
 	{
-		PID* pi = (*processes)[i];
-		if (pi->id == index)
+		PID* pi = processes->at(i);
+		if (pi != NULL && pi->id == index)
 		{
 			return pi;
 		}
