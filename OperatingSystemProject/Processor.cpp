@@ -12,7 +12,7 @@ Processor::Processor(Kernel* kernel, Memory* ram)
 Processor::~Processor()
 {
 	if (this->run_thread->joinable())
-		this->run_thread->detach();
+		this->run_thread->join();
 	delete this->run_thread;
 	delete this->registers;
 }
@@ -43,25 +43,29 @@ void Processor::setContext(PID* pInfo)
 
 void Processor::resume()
 {
-	if (run_thread != NULL && run_thread->joinable())
-		run_thread->join();
-
-	//create a new run thread
-	run_thread = new std::thread(&Processor::run, this);
+	halted = false;
 };
 
 void Processor::run()
 {
-	halted = false;
-	while (!halted)
+	while (running)
 	{
-		unsigned int instruction = fetch(); //get the next instruction from memory
-		decode_and_execute(instruction); //decode and execute instruction
-		this->pc++; //increment the program counter
-	}
+		//check every 100 microseconds if it's time to wake back up
+		while (halted)
+		{
+			std::this_thread::sleep_for(std::chrono::microseconds(100));
+		}
 
-	//throw halted event
-	this->kernel->Event_CPUHalted(this, this->context, PROGRAM_END);
+		while (!halted)
+		{
+			unsigned int instruction = fetch(); //get the next instruction from memory
+			decode_and_execute(instruction); //decode and execute instruction
+			this->pc++; //increment the program counter
+		}
+
+		//throw halted event
+		this->kernel->Event_CPUHalted(this, this->context, PROGRAM_END);
+	}
 };
 
 int Processor::fetch()
@@ -69,6 +73,11 @@ int Processor::fetch()
 	unsigned int addr = this->pc + this->context->base_addr;
 	return this->physical_ram->get(addr, false);
 };
+
+void Processor::systemTerminate()
+{
+	this->running = false;
+}
 
 void Processor::decode_and_execute(unsigned int instruction)
 {
@@ -230,14 +239,6 @@ void Processor::decode_and_execute(unsigned int instruction)
 void Processor::interrupt()
 {
 	this->halted = true; //set halted so the execution loop thread will stop itself
-
-	//since halted is now true, wait for the execution loop to stop executing the instruction it was working on
-	if (this->run_thread != NULL && this->run_thread->joinable())
-		this->run_thread->join();
-
-	//now that the thread has ended execution, destroy it
-	delete run_thread;
-	run_thread = NULL;
 
 	//now that the CPU is halted, call the interrupt event through the Kernel
 	this->kernel->Event_CPUHalted(this, this->context, INTERRUPTED);

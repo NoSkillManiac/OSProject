@@ -59,6 +59,8 @@ public:
 	PID* getContext();
 	void clearContext();
 	void setContext(PID* context);
+
+	void systemTerminate();
 	
 private:
 	//registers[0] is the accumulator
@@ -71,6 +73,7 @@ private:
 	Memory* physical_ram;
 	std::thread* run_thread = NULL;
 	Kernel* kernel;
+	bool running = true;
 
 	void run(); //runs the fetch, decode, execute loop
 	int fetch(); //fetch the next instruction
