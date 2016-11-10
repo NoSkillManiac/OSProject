@@ -47,8 +47,10 @@ Kernel::Kernel(Memory* virtualram, Disk* virtualdisk, std::vector<unsigned int>*
 	{
 		while (halt_events->size() > 0)
 		{
+			event_mutex.lock();
 			CpuHaltEvent* evt = halt_events->at(0);
 			halt_events->erase(halt_events->begin());
+			event_mutex.unlock();
 			Processor* src = evt->getSrc();
 			HaltReason reason = evt->getHaltReason();
 			PID* prgrm = evt->getProcess();
@@ -187,7 +189,9 @@ void Kernel::Event_CPUHalted(Processor* src, PID* prgrm, HaltReason reason)
 {
 	//pcb_mutex.lock();
 	CpuHaltEvent* evt = new CpuHaltEvent(src, prgrm, reason);
+	event_mutex.lock();
 	halt_events->push_back(evt);
+	event_mutex.unlock();
 	//pcb_mutex.unlock();
 }
 

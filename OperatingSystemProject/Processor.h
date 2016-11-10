@@ -2,6 +2,7 @@
 #define INCLUDE_PROCESSOR
 
 #include <thread>
+#include <mutex>
 #include "Memory.h"
 #include "PID.h"
 
@@ -69,9 +70,11 @@ private:
 	int* registers; //holds 16 integers, initialized in the constructor
 	unsigned short pc; //program counter
 	bool halted = false; //is the processor halted right now?
+
 	PID* context;
 	Memory* physical_ram;
 	std::thread* run_thread = NULL;
+	std::mutex context_lock;
 	Kernel* kernel;
 	bool running = true;
 

@@ -48,7 +48,7 @@ private:
 	std::vector<unsigned int>* files;
 	LTS* lts;
 	STS* sts;
-	std::mutex pcb_mutex;
+	std::mutex event_mutex;
 	unsigned int lastUsedAddr = 0;
 	std::vector<CpuHaltEvent*>* halt_events;
 	bool running = true;

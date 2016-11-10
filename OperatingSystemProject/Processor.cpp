@@ -28,7 +28,9 @@ void Processor::clearContext()
 	{
 		this->registers[i] = 0;
 	}
+	context_lock.lock();
 	this->context = NULL;
+	context_lock.unlock();
 }
 
 void Processor::setContext(PID* pInfo)
@@ -37,8 +39,11 @@ void Processor::setContext(PID* pInfo)
 	{
 		this->registers[i] = pInfo->registers[i];
 	}
-	this->context = pInfo;
 	this->pc = pInfo->counter;
+
+	context_lock.lock();
+	this->context = pInfo;
+	context_lock.unlock();
 }
 
 void Processor::resume()
@@ -64,13 +69,17 @@ void Processor::run()
 		}
 
 		//throw halted event
+		context_lock.lock();
 		this->kernel->Event_CPUHalted(this, this->context, PROGRAM_END);
+		context_lock.unlock();
 	}
 };
 
 int Processor::fetch()
 {
+	context_lock.lock();
 	unsigned int addr = this->pc + this->context->base_addr;
+	context_lock.unlock();
 	return this->physical_ram->get(addr, false);
 };
 
