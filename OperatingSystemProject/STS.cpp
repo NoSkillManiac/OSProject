@@ -82,13 +82,30 @@ void STS::addToScheduler(PID* pi) //adds to the scheduler
 	}
 }
 
-void STS::addToQueue(PID* pi) //adds to end of queue
+void STS::addToQueue(PID* pi) //adds queue based on priority
 {
 	Node<PID*> *t = new Node<PID*>(pi);
 	Node<PID*> *current = pList;
+	if (current == NULL)
+		pList = t;
 	while (current->getNext() != NULL)
+	{
+		if (current->getData()->priority < t->getData()->priority)
+		{
+			t->setNext(current);
+			pList = t;
+		}
+		else if (t->getData()->priority > current->getNext()->getData()->priority)
+		{
+			t->setNext(current->getNext());
+			current->setNext(t);
+		}
+		else if (current->getNext()->getNext() == NULL && t->getData()->priority <= current->getNext()->getData()->priority)
+			current->setNext(t);
 		current = current->getNext();
-	current->setNext(t);
+	}
+
+	//checkInterrupt(); -- Still needs implementing, will do 11/11.
 }
 
 void STS::removeFrom(PID* pid) //removes process from queue for any reason
