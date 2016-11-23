@@ -21,6 +21,7 @@ public:
 	void action(PID* pid); //determines action to be taken after checkstate
 	void incPriority(PID* pid); //increases priority after a certian wait time; DOES NOT NEED IMPLEMENTATION YET
 	void Event_CPUHalted(Processor* src, PID* prgrm, HaltReason reason); //called by kernel when a cpu halts
+	void checkInterrupt(PID* pid)
 
 private:
 	ProcessState checkState(PID* pid); //Checks process state to determine action

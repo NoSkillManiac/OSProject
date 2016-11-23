@@ -73,13 +73,8 @@ void STS::addToScheduler(PID* pi) //adds to the scheduler
 		}
 	}
 
-	//now that the queue has the process added, ordered by priority, see if this is a high enough priority process
-	if (pi->priority < lowestProcessor->getContext()->priority)
-	{
-		//process being scheduled takes priority over the lowest priority process being executed currently
-		//NOT READY TO PREEMPT
-		//lowestProcessor->interrupt(); //interrupt that processor. Event_CPUHalted will handle the context switch
-	}
+	checkInterrupt(pi);
+	
 }
 
 void STS::addToQueue(PID* pi) //adds queue based on priority
@@ -105,7 +100,19 @@ void STS::addToQueue(PID* pi) //adds queue based on priority
 		current = current->getNext();
 	}
 
-	//checkInterrupt(); -- Still needs implementing, will do 11/11.
+	checkInterrupt(pi); // Still needs implementing, will do 11/11.
+}
+
+void STS::checkInterrupt(PID* pi)
+{
+	Processor* lowestProcessor = this->processors[0];
+	//now that the queue has the process added, ordered by priority, see if this is a high enough priority process
+	if (pi->priority < lowestProcessor->getContext()->priority)
+	{
+		//process being scheduled takes priority over the lowest priority process being executed currently
+		//should preempt with context switch.
+		lowestProcessor->interrupt(); //interrupt that processor. Event_CPUHalted will handle the context switch
+	}
 }
 
 void STS::removeFrom(PID* pid) //removes process from queue for any reason
